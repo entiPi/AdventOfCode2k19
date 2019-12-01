@@ -1,9 +1,14 @@
-add_executable(
+add_library(module SHARED
+    module.cpp
 )
 
-add_executable(
+add_executable(test-module
+    module.test.cpp
 )
-target_link_libraries(
+
+target_link_libraries(test-module
+    module
     Catch2::Catch2
 )
-add_test()
+
+add_test(ModuleTests test-module)
