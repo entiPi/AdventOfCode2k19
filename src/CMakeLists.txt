@@ -2,6 +2,14 @@ add_library(module SHARED
     module.cpp
 )
 
+add_executable(fuel-calculator
+    fuel_calculator.cpp
+)
+
+target_link_libraries(fuel-calculator
+    module
+)
+
 add_executable(test-module
     module.test.cpp
 )
