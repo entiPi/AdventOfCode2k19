@@ -20,3 +20,6 @@ target_link_libraries(test-module
 )
 
 add_test(ModuleTests test-module)
+
+
+add_subdirectory(intcode)
