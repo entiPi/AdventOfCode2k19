@@ -10,6 +10,14 @@ target_link_libraries(fuel-calculator
     module
 )
 
+add_executable(gravity-assist
+    gravity_assist.cpp
+)
+
+target_link_libraries(gravity-assist
+    intcode
+)
+
 add_executable(test-module
     module.test.cpp
 )
