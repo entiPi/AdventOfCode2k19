@@ -1,4 +1,4 @@
-#include "module.hpp"
+#include <module/module.hpp>
 
 namespace module {
 

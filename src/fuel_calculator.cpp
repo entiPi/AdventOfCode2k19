@@ -1,7 +1,7 @@
 #include <numeric>
 #include <vector>
 #include <iostream>
-#include "module.hpp"
+#include <module/module.hpp>
 
 
 static const std::vector<int> module_masses {

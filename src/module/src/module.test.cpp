@@ -1,6 +1,6 @@
 #define CATCH_CONFIG_MAIN
 #include <catch2/catch.hpp>
-#include "module.hpp"
+#include <module/module.hpp>
 
 TEST_CASE("calculation of required fuel works", "[module], [fuel]") {
     using module::calculateRequiredFuel;

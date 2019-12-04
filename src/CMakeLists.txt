@@ -1,6 +1,5 @@
-add_library(module SHARED
-    module.cpp
-)
+add_subdirectory(module)
+add_subdirectory(intcode)
 
 add_executable(fuel-calculator
     fuel_calculator.cpp
@@ -14,20 +13,19 @@ add_executable(gravity-assist
     gravity_assist.cpp
 )
 
+target_compile_options(gravity-assist
+    PRIVATE
+        -pedantic
+        -Wall
+        -Wextra
+)
+
+target_compile_features(gravity-assist
+    PRIVATE
+        cxx_std_17
+)
+
 target_link_libraries(gravity-assist
     intcode
 )
 
-add_executable(test-module
-    module.test.cpp
-)
-
-target_link_libraries(test-module
-    module
-    Catch2::Catch2
-)
-
-add_test(ModuleTests test-module)
-
-
-add_subdirectory(intcode)

@@ -1,5 +1,5 @@
 #include <iostream>
-#include <intcode.hpp>
+#include <intcode/intcode.hpp>
 
 static const intcode::program original_prog{
     1,0,0,3,      1,1,2,3,      1,3,4,3,      1,5,0,3,      2,6,1,19,

@@ -1,6 +1,6 @@
 #define CATCH_CONFIG_MAIN
 #include <catch2/catch.hpp>
-#include "intcode.hpp"
+#include <intcode/intcode.hpp>
 
 using namespace std;
 using namespace intcode;

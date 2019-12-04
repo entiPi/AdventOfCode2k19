@@ -1,4 +1,4 @@
-#include "intcode.hpp"
+#include <intcode/intcode.hpp>
 #include <iterator>
 #include <functional>
 #include <type_traits>

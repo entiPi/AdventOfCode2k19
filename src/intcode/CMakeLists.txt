@@ -1,9 +1,20 @@
 add_library(intcode SHARED
-    intcode.cpp
+    src/intcode.cpp
 )
 
 target_include_directories(intcode
-    PUBLIC .
+    PUBLIC
+        $<INSTALL_INTERFACE:include>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/src
+)
+
+target_compile_options(intcode
+    PRIVATE
+        -pedantic-errors
+        -Wall
+        -Wextra
 )
 
 target_compile_features(intcode
@@ -12,7 +23,7 @@ target_compile_features(intcode
 )
 
 add_executable(test-intcode
-    intcode.test.cpp
+    src/intcode.test.cpp
 )
 
 target_link_libraries(test-intcode
