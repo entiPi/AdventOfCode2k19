@@ -1,5 +1,6 @@
 add_subdirectory(module)
 add_subdirectory(intcode)
+add_subdirectory(intersect)
 
 add_executable(fuel-calculator
     fuel_calculator.cpp
