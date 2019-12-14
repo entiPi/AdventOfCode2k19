@@ -1,6 +1,7 @@
 add_subdirectory(module)
 add_subdirectory(intcode)
 add_subdirectory(intersect)
+add_subdirectory(algorithm)
 
 add_executable(fuel-calculator
     fuel_calculator.cpp
@@ -28,5 +29,6 @@ target_compile_features(gravity-assist
 
 target_link_libraries(gravity-assist
     intcode
+    algorithm
 )
 
