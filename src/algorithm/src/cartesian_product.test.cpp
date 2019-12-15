@@ -13,11 +13,8 @@ TEST_CASE("cartesian product") {
 
     SECTION("same set") {
         vector<tuple<int,int>> result;
-        auto iter = cartesian_product(begin(pos), end(pos), begin(pos), end(pos));
-        while (iter) {
-            auto [a,b] = *iter;
+        for (auto [a, b] : cartesian_product(begin(pos), end(pos), begin(pos), end(pos))) {
             result.emplace_back(*a, *b);
-            ++iter;
         }
 
         vector<tuple<int,int>> expected{
@@ -31,11 +28,8 @@ TEST_CASE("cartesian product") {
 
     SECTION("same types") {
         vector<tuple<int,int>> result;
-        auto iter = cartesian_product(begin(pos), end(pos), begin(neg), end(neg));
-        while (iter) {
-            auto [a,b] = *iter;
+        for (auto [a, b] : cartesian_product(begin(pos), end(pos), begin(neg), end(neg))) {
             result.emplace_back(*a, *b);
-            ++iter;
         }
 
         vector<tuple<int,int>> expected{
@@ -49,11 +43,8 @@ TEST_CASE("cartesian product") {
 
     SECTION("different types") {
         vector<tuple<char,int>> result;
-        auto iter = cartesian_product(begin(chars), end(chars), begin(pos), end(pos));
-        while (iter) {
-            auto [a,b] = *iter;
+        for (auto [a, b] : cartesian_product(begin(chars), end(chars), begin(pos), end(pos))) {
             result.emplace_back(*a, *b);
-            ++iter;
         }
 
         vector<tuple<char,int>> expected{

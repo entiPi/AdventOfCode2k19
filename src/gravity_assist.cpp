@@ -26,12 +26,9 @@ int main() {
     iota(begin(number_range), end(number_range), 0);
 
     auto const [noun, verb] = [&] {
-      for (auto number_seq = cartesian_product(
+      for (auto [noun, verb] : cartesian_product(
               begin(number_range), end(number_range),
-              begin(number_range), end(number_range))
-          ; number_seq
-          ; ++number_seq) {
-          auto const& [noun, verb] = *number_seq;
+              begin(number_range), end(number_range))) {
           auto fixed_prog{original_prog};
           fixed_prog[1] = *noun;
           fixed_prog[2] = *verb;

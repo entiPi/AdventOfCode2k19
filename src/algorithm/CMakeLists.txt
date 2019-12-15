@@ -1,3 +1,5 @@
+find_package(Boost 1.59 REQUIRED COMPONENTS coroutine)
+
 add_library(algorithm INTERFACE)
 
 target_include_directories(algorithm
@@ -8,6 +10,11 @@ target_include_directories(algorithm
 target_compile_features(algorithm
     INTERFACE
         cxx_std_14
+)
+
+target_link_libraries(algorithm
+    INTERFACE
+        Boost::coroutine  # actually coroutine2 but it's the same target
 )
 
 add_executable(test-algorithm
