@@ -1,4 +1,5 @@
 #include <intersect/intersect.hpp>
+#include <algorithm/cartesian_product.hpp>
 #include <cassert>
 #include <sstream>
 
@@ -38,12 +39,6 @@ direction move::dir() const {
 }
 
 point::point(int x_, int y_) : x{x_}, y{y_} {}
-
-std::string point::str() const {
-    std::stringstream ss;
-    ss << '{' << x << ',' << y << '}';
-    return ss.str();
-}
 
 line point::move_towards(point const& destination) {
     auto direction = [&] {
@@ -99,7 +94,7 @@ path::path(point origin)
 }
 
 path& path::then(move next) {
-    upcoming_moves.push_back(std::move(next));
+    moves.push_back(std::move(next));
     return *this;
 }
 
@@ -145,21 +140,22 @@ std::string to_string(direction d) {
         case direction::DOWN: return "DOWN";
         case direction::LEFT: return "LEFT";
         case direction::RIGHT: return "RIGHT";
+        default: throw invalid_direction{static_cast<char>(d)};
     }
 }
 
 path& path::operator++() {
     if (!next_stopover) {
-        auto const& next_move = upcoming_moves[0];
+        auto const& next_move = moves[0];
         current_step = line{current_point, next_move.dir()};
         next_stopover = current_point + next_move;
     }
     else if (current_point == next_stopover) {
-        if (current_move_index < upcoming_moves.size())
-            ++current_move_index;
-        auto const& next_move = upcoming_moves[current_move_index];
-        current_step = line{current_point, next_move.dir()};
-        next_stopover = current_point + next_move;
+        if (current_move_index < moves.size()) {
+            auto const& next_move = moves[++current_move_index];
+            current_step = line{current_point, next_move.dir()};
+            next_stopover = current_point + next_move;
+        }
     }
 
     current_point = *++current_step;
@@ -184,12 +180,34 @@ bool path::operator==(path const& other) const {
     return current_step == other.current_step
         && current_move_index == other.current_move_index
         && next_stopover == other.next_stopover
-        && upcoming_moves == other.upcoming_moves;
+        && moves == other.moves;
 }
 
 bool path::operator!=(path const& other) const {
     return !(*this == other);
 }
+
+bool path::operator==(end_of_path) const {
+    return current_move_index == moves.size();
+}
+
+bool path::operator!=(end_of_path) const {
+    return !(*this == end_of_path{});
+}
+
+path& path::operator+(move next) {
+    then(std::move(next));
+    return *this;
+}
+
+path& path::begin() { return *this; }
+path const& path::begin() const { return *this; }
+end_of_path path::end() { return end_of_path{}; }
+end_of_path path::end() const { return end_of_path{}; }
+path& begin(path& p) { return p.begin(); }
+path const& begin(path const& p) { return p.begin(); }
+end_of_path end(path& p) { return p.end(); }
+end_of_path end(path const& p) { return p.end(); }
 
 bool move::operator==(move const& other) const {
     return x == other.x && y == other.y;
@@ -197,6 +215,18 @@ bool move::operator==(move const& other) const {
 
 bool move::operator!=(move const& other) const {
     return !(*this == other);
+}
+
+std::vector<point> intersections(path const& p1, path const& p2) {
+    std::vector<point> intersections{};
+    for (auto [point1, point2] : cartesian_product(
+                begin(p1), end(p1),
+                begin(p2), end(p2))) {
+        if (*point1 == *point2) {
+            intersections.push_back(*point1);
+        }
+    }
+    return intersections;
 }
 
 bool operator==(point const& lhs, point const& rhs) {
@@ -207,14 +237,22 @@ bool operator!=(point const& lhs, point const& rhs) {
     return !(lhs == rhs);
 }
 
+bool operator==(end_of_path, path const& rhs) {
+    return rhs == end_of_path{};
+}
+
+bool operator!=(end_of_path, path const& rhs) {
+    return rhs != end_of_path{};
+}
+
+std::ostream& operator<<(std::ostream& os, point const& p) {
+    return os << '(' << p.x << ',' << p.y << ')';
+}
+
 point& point::operator+=(move const& rhs) {
     x += rhs.x;
     y += rhs.y;
     return *this;
-}
-
-std::string point::print() const {
-    return '(' + std::to_string(x) + ',' + std::to_string(y) + ')';
 }
 
 point operator+(point const& p, move const& m) {

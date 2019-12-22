@@ -12,13 +12,19 @@ target_include_directories(intersect
 
 target_compile_options(intersect
     PRIVATE
-        -pedantic-errors
+        -Werror
+        -pedantic
         -Wall
         -Wextra
 )
 
 target_compile_features(intersect
     PUBLIC cxx_std_17
+)
+
+target_link_libraries(intersect
+    PUBLIC
+        algorithm
 )
 
 add_executable(test-intersect

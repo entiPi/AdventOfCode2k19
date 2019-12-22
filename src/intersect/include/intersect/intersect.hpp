@@ -1,6 +1,6 @@
 #include <string_view>
-#include <string>
 #include <iterator>
+#include <ostream>
 #include <functional>
 #include <optional>
 #include <vector>
@@ -15,11 +15,9 @@ struct line;
 struct point {
     point(int x, int y);
 
-    std::string str() const;
     line move_towards(point const& destination);
 
     point& operator+=(move const& rhs);
-    std::string print() const;
 
     private:
     int x, y;
@@ -27,6 +25,7 @@ struct point {
     friend bool operator==(point const&, point const&);
     friend point operator+(point const&, move const&);
     friend point operator+(point&&, move const&);
+    friend std::ostream& operator<<(std::ostream&, point const&);
     friend struct line;
 };
 
@@ -58,6 +57,7 @@ struct line : std::iterator<std::forward_iterator_tag, point> {
 struct move {
     move(std::string_view movestr);
     move(std::string_view::const_iterator first, std::string_view::const_iterator last);
+
     direction dir() const;
 
     bool operator==(move const& other) const;
@@ -72,9 +72,16 @@ struct move {
     friend point& point::operator+=(move const&);
 };
 
+struct end_of_path {};
+
 struct path {
     path(point origin);
     path& then(move next);
+
+    void shrink(int scale);
+    using section_iterator = std::vector<move>::iterator;
+    using const_section_iterator = std::vector<move>::const_iterator;
+    std::tuple<const_section_iterator, const_section_iterator> sections() const;
 
     path& operator++();
     path operator++(int);
@@ -82,28 +89,51 @@ struct path {
     point* operator->();
     bool operator==(path const& other) const;
     bool operator!=(path const& other) const;
+    bool operator==(end_of_path) const;
+    bool operator!=(end_of_path) const;
+    path& operator+(move next);
+
+    path& begin();
+    end_of_path end();
+    path const& begin() const;
+    end_of_path end() const;
 
     private:
     point current_point;
     std::optional<point> next_stopover;
     size_t current_move_index{0};
-    std::vector<move> upcoming_moves;
+    std::vector<move> moves;
     line current_step{current_point, direction::UP};
 };
 
+using namespace std::string_literals;
+
 struct invalid_direction : std::runtime_error {
-    invalid_direction(char d) : std::runtime_error{"invalid direction: " + d} {};
+    invalid_direction(char d) : std::runtime_error{"invalid direction: "s + d} {};
 };
 
 struct invalid_distance : std::runtime_error {
-    invalid_distance(char d) : std::runtime_error{"invalid distance: " + d} {};
+    invalid_distance(char d) : std::runtime_error{"invalid distance: "s + d} {};
 };
+
+std::vector<point> intersections(path const& p1, path const& p2);
+
+std::ostream& operator<<(std::ostream&, point const&);
 
 bool operator==(point const& lhs, point const& rhs);
 bool operator!=(point const& lhs, point const& rhs);
 
 point operator+(point const& p, move const& m);
 point operator+(point&& p, move const& m);
+
+path& begin(path&);
+end_of_path end(path&);
+path const& begin(path const&);
+end_of_path end(path&);
+end_of_path end(path const&);
+
+bool operator==(end_of_path, path const& rhs);
+bool operator!=(end_of_path, path const& rhs);
 
 void swap(line &lhs, line& rhs) noexcept;
 

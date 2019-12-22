@@ -5,14 +5,6 @@
 
 using namespace intersect;
 
-namespace intersect {
-
-std::ostream& operator<<(std::ostream& os, point const& p) {
-    return os << p.str();
-}
-
-}
-
 
 TEST_CASE("move") {
     SECTION("valid") {
@@ -145,3 +137,37 @@ TEST_CASE("paths") {
     }
 }
 
+TEST_CASE("intersections") {
+    using Catch::Matchers::Equals;
+    using Catch::Matchers::UnorderedEquals;
+
+    SECTION("single intersection") {
+        auto first_leg = path{point{2,0}}.then(move{"U3"});
+        auto second_leg = path{point{0,2}}.then(move{"R3"});
+        auto expected = std::vector<point>{point{2,2}};
+        REQUIRE_THAT(intersections(first_leg, second_leg), UnorderedEquals(expected));
+    }
+
+    SECTION("origin is included") {
+        point origin{0,0};
+        auto first_leg = path{origin}.then(move{"U1"});
+        auto second_leg = path{origin}.then(move{"R1"});
+        auto expected = std::vector<point>{origin};
+        REQUIRE_THAT(intersections(first_leg, second_leg), Equals(expected));
+    }
+
+    SECTION("goal is included") {
+        auto first_leg = path{point{0,1}}.then(move{"R1"});
+        auto second_leg = path{point{1,0}}.then(move{"U1"});
+        auto expected = std::vector<point>{point{1,1}};
+        REQUIRE_THAT(intersections(first_leg, second_leg), Equals(expected));
+    }
+
+    SECTION("multiple intersections") {
+        point origin{0,0};
+        auto first_leg = path{origin}.then(move{"R8"}).then(move{"U5"}).then(move{"L5"}).then(move{"D3"});
+        auto second_leg = path{origin}.then(move{"U7"}).then(move{"R6"}).then(move{"D4"}).then(move{"L4"});
+        auto expected = std::vector<point>{point{0,0}, point{3,3}, point{6,5}};
+        REQUIRE_THAT(intersections(first_leg, second_leg), UnorderedEquals(expected));
+    }
+}
