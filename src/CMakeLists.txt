@@ -33,3 +33,20 @@ target_link_libraries(gravity-assist
     algorithm
 )
 
+add_executable(closest-intersection
+    closest_intersection.cpp
+)
+
+target_compile_options(closest-intersection
+    PRIVATE
+        -Werror
+        -pedantic
+        -Wall
+        -Wextra
+)
+
+target_link_libraries(closest-intersection
+    PRIVATE
+        intersect
+        utils
+)

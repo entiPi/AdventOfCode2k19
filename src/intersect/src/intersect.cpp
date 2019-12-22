@@ -58,6 +58,10 @@ line point::move_towards(point const& destination) {
     return line{*this, direction};
 }
 
+int point::distance_to(point const& other) const {
+    return abs(x-other.x) + abs(y-other.y);
+}
+
 constexpr direction parse_direction(char d) {
     switch(d) {
         case 'U': return direction::UP;

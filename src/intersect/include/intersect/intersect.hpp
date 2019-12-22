@@ -16,6 +16,7 @@ struct point {
     point(int x, int y);
 
     line move_towards(point const& destination);
+    int distance_to(point const& other) const;
 
     point& operator+=(move const& rhs);
 
