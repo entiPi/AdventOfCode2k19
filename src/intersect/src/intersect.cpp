@@ -2,6 +2,8 @@
 #include <algorithm/cartesian_product.hpp>
 #include <cassert>
 #include <sstream>
+#include <cmath>
+#include <tuple>
 
 #include <iostream>
 
@@ -42,6 +44,17 @@ direction move::dir() const {
 
 int move::length() const {
     return abs(x + y);
+}
+
+void move::shrink(int scale) {
+    auto div_x =  std::div(x, scale);
+    auto div_y =  std::div(y, scale);
+
+    if (div_x.rem != 0 || div_y.rem != 0)
+        throw std::runtime_error{"Cannot shrink move"};
+
+    x = div_x.quot;
+    y = div_y.quot;
 }
 
 point::point(int x_, int y_) : x{x_}, y{y_} {}
@@ -106,6 +119,15 @@ path::path(point origin)
 path& path::then(move next) {
     moves.push_back(std::move(next));
     return *this;
+}
+
+void path::shrink(int scale) {
+    for (auto& move : moves)
+        move.shrink(scale);
+}
+
+std::tuple<path::const_section_iterator, path::const_section_iterator> path::sections() const {
+    return std::make_tuple(moves.cbegin(), moves.cend());
 }
 
 line& line::operator++() {

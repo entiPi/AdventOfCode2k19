@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <chrono>
 #include <type_traits>
+#include <numeric>
 
 using namespace std;
 using namespace std::chrono;
@@ -68,6 +69,7 @@ int main() {
 
     clog << duration_cast<dt>(t.this_lap()) << ": parsed input\n";
 
+    /* path-length pre-shrink */
     auto length = [](path p) {
         size_t count{0};
         for (auto it = begin(p)
@@ -75,7 +77,22 @@ int main() {
             ; ++it, ++count);
         return count;
     };
-    clog << duration_cast<dt>(t.this_lap()) << " length: wire1=" << length(wire1) << " wire2=" << length(wire2) << '\n';
+    clog << duration_cast<dt>(t.this_lap()) << " length before shrink: wire1=" << length(wire1) << " wire2=" << length(wire2) << '\n';
+
+    /* shrinking */
+    auto gcd = [](int current, intersect::move const& m) {
+        return std::gcd(current, m.length());
+    };
+    auto [begin1, end1] = wire1.sections();
+    auto [begin2, end2] = wire2.sections();
+    auto scale = std::gcd(
+        accumulate(begin1, end1, 1, gcd),
+        accumulate(begin2, end2, 1, gcd));
+    wire1.shrink(scale);
+    wire2.shrink(scale);
+
+    /* path-length post-shrink */
+    clog << duration_cast<dt>(t.this_lap()) << " length after shrink: wire1=" << length(wire1) << " wire2=" << length(wire2) << '\n';
 
     vector<point> crossings = intersections(wire1, wire2);
 

@@ -61,6 +61,7 @@ struct move {
 
     direction dir() const;
     int length() const;
+    void shrink(int scale);
 
     bool operator==(move const& other) const;
     bool operator!=(move const& other) const;
