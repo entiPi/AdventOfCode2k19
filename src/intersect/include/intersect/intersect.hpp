@@ -60,6 +60,7 @@ struct move {
     move(std::string_view::const_iterator first, std::string_view::const_iterator last);
 
     direction dir() const;
+    int length() const;
 
     bool operator==(move const& other) const;
     bool operator!=(move const& other) const;

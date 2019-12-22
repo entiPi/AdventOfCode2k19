@@ -3,6 +3,8 @@
 #include <cassert>
 #include <sstream>
 
+#include <iostream>
+
 
 namespace intersect {
 
@@ -36,6 +38,10 @@ move::move(std::string_view::const_iterator current, std::string_view::const_ite
 
 direction move::dir() const {
     return direction_;
+}
+
+int move::length() const {
+    return abs(x + y);
 }
 
 point::point(int x_, int y_) : x{x_}, y{y_} {}
@@ -223,13 +229,17 @@ bool move::operator!=(move const& other) const {
 
 std::vector<point> intersections(path const& p1, path const& p2) {
     std::vector<point> intersections{};
+    size_t count{0};
     for (auto [point1, point2] : cartesian_product(
                 begin(p1), end(p1),
                 begin(p2), end(p2))) {
+        ++count;
         if (*point1 == *point2) {
+            std::clog << "found intersection: " << *point1 << " comparisons: " << count << '\n';
             intersections.push_back(*point1);
         }
     }
+    std::clog << "comparisons: " << count << '\n';
     return intersections;
 }
 
