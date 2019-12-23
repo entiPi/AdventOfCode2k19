@@ -1,312 +1,147 @@
 #include <intersect/intersect.hpp>
+#include <intersect/direction.hpp>
 #include <algorithm/cartesian_product.hpp>
-#include <cassert>
-#include <sstream>
-#include <cmath>
+#include <algorithm>
+#include <iterator>
 #include <tuple>
 
 #include <iostream>
 
 
+using namespace std;
+
 namespace intersect {
 
-bool is_number(char c) {
-    return c >= '0' && c <= '9';
+namespace {
+
+bool is_vertical(line const& l) {
+    return l.direction() == dir::UP || l.direction() == dir::DOWN;
 }
 
-move::move(std::string_view movestr) : move(std::cbegin(movestr), std::cend(movestr)) {}
+bool is_horizontal(line const& l) {
+    return l.direction() == dir::LEFT || l.direction() == dir::RIGHT;
+}
 
-move::move(std::string_view::const_iterator current, std::string_view::const_iterator last) {
-    assert(current != last);
-    auto direction = *current++;
-    auto distance = [&] {
-      std::string distance;
-      while (current != last) {
-          if (!is_number(*current))
-              throw invalid_distance{*current};
-          distance += *current++;
-      }
-      return std::stoi(distance);
-    }();
+bool is_parallel(line const& l1, line const& l2) {
+    return (is_vertical(l1) && is_vertical(l2))
+        || (is_horizontal(l1) && is_horizontal(l2));
+}
 
-    direction_ = parse_direction(direction);
-    switch (direction_) {
-        case direction::UP: y = distance; break;
-        case direction::DOWN: y = -distance; break;
-        case direction::RIGHT: x = distance; break;
-        case direction::LEFT: x = -distance; break;
+bool has_parallel_offset(point::value_type(x_or_y)(point const&), line const& l1, line const& l2) {
+    return x_or_y(l1.start()) - x_or_y(l2.start()) != 0;
+}
+
+point::value_type get_x(point const& p) { return p.x(); }
+point::value_type get_y(point const& p) { return p.y(); }
+
+pair<point::value_type, point::value_type> get_sorted(point::value_type(x_or_y)(point const&), line const& l) {
+    return minmax(x_or_y(l.start()), x_or_y(l.stop()));
+}
+
+bool is_between(int val, int low, int high) {
+    return low <= val && val <= high;
+}
+
+function<function<point()>(point::value_type)> horizontal(point::value_type y) {
+    return [=](point::value_type x) {
+        return [x, y]() mutable {
+            return point{x++, y};
+        };
+    };
+}
+
+function<function<point()>(point::value_type)> vertical(point::value_type x) {
+    return [=](point::value_type y) {
+        return [x, y]() mutable {
+            return point{x, y++};
+        };
+    };
+}
+
+template<typename Generator>
+vector<point> generate_point_sequence(point::value_type from, point::value_type to, Generator generate_points) {
+    auto const distance = 1 + to-from;  // add point because 'to' is inclusive
+    vector<point> vec{};
+    vec.reserve(distance);
+    generate_n(back_inserter(vec), distance, generate_points(from));
+    return vec;
+}
+
+point rotate(point const& p) {
+    return point{p.y(), p.x()};
+}
+
+line rotate(line const& l) {
+    return line{rotate(l.start()), rotate(l.stop())};
+}
+
+tuple<bool,line> make_horizontal(line const& l) {
+    if (is_vertical(l))
+        return make_tuple(true, rotate(l));
+    return make_tuple(false, l);
+}
+
+}
+
+vector<point> intersection(line const& a, line const& b) {
+    if (is_parallel(a, b)) {
+        auto const [flipped,fa] = make_horizontal(a);
+        auto const fb = get<1>(make_horizontal(b));
+        if (!has_parallel_offset(get_y, fa, fb)) {
+            auto const y = get_y(a.start());
+            auto [a1,a2] = get_sorted(get_x, fa);
+            auto [b1,b2] = get_sorted(get_x, fb);
+            if (is_between(b1, a1, a2)) {
+                if (b2 < a2)
+                    return generate_point_sequence(b1, b2, flipped ? vertical(y) : horizontal(y));
+                else
+                    return generate_point_sequence(b1, a2, flipped ? vertical(y) : horizontal(y));
+            }
+            else if (is_between(a1, b1, b2)) {
+                if (a2 < b2)
+                    return generate_point_sequence(a1, a2, flipped ? vertical(y) : horizontal(y));
+                else
+                    return generate_point_sequence(a1, b2, flipped ? vertical(y) : horizontal(y));
+            }
+            else
+                return {};
+        }
     }
-}
-
-direction move::dir() const {
-    return direction_;
-}
-
-int move::length() const {
-    return abs(x + y);
-}
-
-void move::shrink(int scale) {
-    auto div_x =  std::div(x, scale);
-    auto div_y =  std::div(y, scale);
-
-    if (div_x.rem != 0 || div_y.rem != 0)
-        throw std::runtime_error{"Cannot shrink move"};
-
-    x = div_x.quot;
-    y = div_y.quot;
-}
-
-point::point(int x_, int y_) : x{x_}, y{y_} {}
-
-line point::move_towards(point const& destination) {
-    auto direction = [&] {
-        const auto difference_in_x{destination.x - x};
-        const auto difference_in_y{destination.y - y};
-        if (difference_in_x > 0)
-            return direction::RIGHT;
-        else if (difference_in_x < 0)
-            return direction::LEFT;
-        else if (difference_in_y > 0)
-            return direction::UP;
-        else if (difference_in_y < 0)
-            return direction::DOWN;
-        else
-            throw invalid_direction{'?'};
-    }();
-    return line{*this, direction};
-}
-
-int point::distance_to(point const& other) const {
-    return abs(x-other.x) + abs(y-other.y);
-}
-
-constexpr direction parse_direction(char d) {
-    switch(d) {
-        case 'U': return direction::UP;
-        case 'D': return direction::DOWN;
-        case 'R': return direction::RIGHT;
-        case 'L': return direction::LEFT;
-        default: throw invalid_direction{d};
-    }
-}
-
-line::line(point start, direction d)
-: pt{start}
-, dir{d} {
-    set_step_forward();
-}
-
-line::line(line const& other) noexcept
-: line(other.pt, other.dir) {
-}
-
-line& line::operator=(line other) noexcept {
-    swap(*this, other);
-    return *this;
-}
-
-line::line(line&& other) noexcept
-: pt{std::move(other.pt)}
-, dir{std::move(other.dir)} {
-    set_step_forward();
-}
-
-path::path(point origin)
-: current_point{origin} {
-}
-
-path& path::then(move next) {
-    moves.push_back(std::move(next));
-    return *this;
-}
-
-void path::shrink(int scale) {
-    for (auto& move : moves)
-        move.shrink(scale);
-}
-
-std::tuple<path::const_section_iterator, path::const_section_iterator> path::sections() const {
-    return std::make_tuple(moves.cbegin(), moves.cend());
-}
-
-line& line::operator++() {
-    one_step_forward();
-    return *this;
-}
-
-line line::operator++(int) {
-    line tmp{*this};
-    one_step_forward();
-    return tmp;
-}
-
-point& line::operator*() {
-    return pt;
-}
-
-point* line::operator->() {
-    return &pt;
-}
-
-bool line::operator==(line const& other) const {
-    return pt == other.pt;
-}
-
-bool line::operator!=(line const& other) const {
-    return pt != other.pt;
-}
-
-void line::set_step_forward() {
-    switch(dir) {
-        case direction::UP: one_step_forward = [&]{ ++ pt.y; }; break;
-        case direction::DOWN: one_step_forward = [&]{ -- pt.y; }; break;
-        case direction::RIGHT: one_step_forward = [&]{ ++ pt.x; }; break;
-        case direction::LEFT: one_step_forward = [&]{ -- pt.x; }; break;
-    }
-}
-
-std::string to_string(direction d) {
-    switch(d) {
-        case direction::UP: return "UP";
-        case direction::DOWN: return "DOWN";
-        case direction::LEFT: return "LEFT";
-        case direction::RIGHT: return "RIGHT";
-        default: throw invalid_direction{static_cast<char>(d)};
-    }
-}
-
-path& path::operator++() {
-    if (!next_stopover) {
-        auto const& next_move = moves[0];
-        current_step = line{current_point, next_move.dir()};
-        next_stopover = current_point + next_move;
-    }
-    else if (current_point == next_stopover) {
-        if (current_move_index < moves.size()) {
-            auto const& next_move = moves[++current_move_index];
-            current_step = line{current_point, next_move.dir()};
-            next_stopover = current_point + next_move;
+    else {  // !is_parallel
+        auto const x = get_x(is_vertical(a) ? a.start() : b.start());
+        auto const y = get_y(is_horizontal(a) ? a.start() : b.start());
+        auto const [x1,x2] = get_sorted(get_x, is_horizontal(a) ? a : b);
+        auto const [y1,y2] = get_sorted(get_y, is_vertical(a) ? a : b);
+        if (is_between(x, x1, x2) && is_between(y, y1, y2)) {
+            return {{x,y}};
         }
     }
 
-    current_point = *++current_step;
-    return *this;
+    return {};
 }
 
-path path::operator++(int) {
-    path tmp{*this};
-    ++*this;
-    return tmp;
+ostream& operator<<(ostream& os, vector<point> const& vec) {
+    os << '[';
+    copy(begin(vec), end(vec), ostream_iterator<point>{os, "; "});
+    os << ']';
+    return os;
 }
 
-point& path::operator*() {
-    return current_point;
-}
-
-point* path::operator->() {
-    return &current_point;
-}
-
-bool path::operator==(path const& other) const {
-    return current_step == other.current_step
-        && current_move_index == other.current_move_index
-        && next_stopover == other.next_stopover
-        && moves == other.moves;
-}
-
-bool path::operator!=(path const& other) const {
-    return !(*this == other);
-}
-
-bool path::operator==(end_of_path) const {
-    return current_move_index == moves.size();
-}
-
-bool path::operator!=(end_of_path) const {
-    return !(*this == end_of_path{});
-}
-
-path& path::operator+(move next) {
-    then(std::move(next));
-    return *this;
-}
-
-path& path::begin() { return *this; }
-path const& path::begin() const { return *this; }
-end_of_path path::end() { return end_of_path{}; }
-end_of_path path::end() const { return end_of_path{}; }
-path& begin(path& p) { return p.begin(); }
-path const& begin(path const& p) { return p.begin(); }
-end_of_path end(path& p) { return p.end(); }
-end_of_path end(path const& p) { return p.end(); }
-
-bool move::operator==(move const& other) const {
-    return x == other.x && y == other.y;
-}
-
-bool move::operator!=(move const& other) const {
-    return !(*this == other);
-}
-
-std::vector<point> intersections(path const& p1, path const& p2) {
-    std::vector<point> intersections{};
+vector<point> intersections(path const& p1, path const& p2) {
+    using namespace std;
+    vector<point> intersections{};
     size_t count{0};
-    for (auto [point1, point2] : cartesian_product(
+    for (auto const& [line1, line2] : cartesian_product(
                 begin(p1), end(p1),
                 begin(p2), end(p2))) {
         ++count;
-        if (*point1 == *point2) {
-            std::clog << "found intersection: " << *point1 << " comparisons: " << count << '\n';
-            intersections.push_back(*point1);
+        if (auto const x = intersection(*line1, *line2); !x.empty()) {
+            clog << "found intersection: " << x << " comparisons: " << count << '\n';
+            copy(begin(x), end(x), back_inserter(intersections));
         }
     }
-    std::clog << "comparisons: " << count << '\n';
+    clog << "total comparisons: " << count << '\n';
     return intersections;
-}
-
-bool operator==(point const& lhs, point const& rhs) {
-    return lhs.x == rhs.x && lhs.y == rhs.y;
-}
-
-bool operator!=(point const& lhs, point const& rhs) {
-    return !(lhs == rhs);
-}
-
-bool operator==(end_of_path, path const& rhs) {
-    return rhs == end_of_path{};
-}
-
-bool operator!=(end_of_path, path const& rhs) {
-    return rhs != end_of_path{};
-}
-
-std::ostream& operator<<(std::ostream& os, point const& p) {
-    return os << '(' << p.x << ',' << p.y << ')';
-}
-
-point& point::operator+=(move const& rhs) {
-    x += rhs.x;
-    y += rhs.y;
-    return *this;
-}
-
-point operator+(point const& p, move const& m) {
-    return point{p.x + m.x, p.y + m.y};
-}
-
-point operator+(point&& p, move const& m) {
-    p.x += m.x;
-    p.y += m.y;
-    return std::move(p);
-}
-
-void swap(line &lhs, line& rhs) noexcept {
-    using std::swap;
-    swap(lhs.pt, rhs.pt);
-    swap(lhs.dir, rhs.dir);
-    lhs.set_step_forward();
-    rhs.set_step_forward();
 }
 
 }

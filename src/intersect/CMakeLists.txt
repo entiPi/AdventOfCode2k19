@@ -1,4 +1,8 @@
 add_library(intersect SHARED
+    src/direction.cpp
+    src/point.cpp
+    src/line.cpp
+    src/path.cpp
     src/intersect.cpp
 )
 
@@ -28,6 +32,10 @@ target_link_libraries(intersect
 )
 
 add_executable(test-intersect
+    src/main.test.cpp
+    src/point.test.cpp
+    src/line.test.cpp
+    src/path.test.cpp
     src/intersect.test.cpp
 )
 
