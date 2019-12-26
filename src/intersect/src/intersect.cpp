@@ -5,8 +5,6 @@
 #include <iterator>
 #include <tuple>
 
-#include <iostream>
-
 
 using namespace std;
 
@@ -120,27 +118,15 @@ vector<point> intersection(line const& a, line const& b) {
     return {};
 }
 
-ostream& operator<<(ostream& os, vector<point> const& vec) {
-    os << '[';
-    copy(begin(vec), end(vec), ostream_iterator<point>{os, "; "});
-    os << ']';
-    return os;
-}
-
 vector<point> intersections(path const& p1, path const& p2) {
     using namespace std;
     vector<point> intersections{};
-    size_t count{0};
     for (auto const& [line1, line2] : cartesian_product(
                 begin(p1), end(p1),
                 begin(p2), end(p2))) {
-        ++count;
-        if (auto const x = intersection(*line1, *line2); !x.empty()) {
-            clog << "found intersection: " << x << " comparisons: " << count << '\n';
+        if (auto const x = intersection(*line1, *line2); !x.empty())
             copy(begin(x), end(x), back_inserter(intersections));
-        }
     }
-    clog << "total comparisons: " << count << '\n';
     return intersections;
 }
 
