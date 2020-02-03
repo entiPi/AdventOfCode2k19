@@ -52,4 +52,15 @@ path::const_iterator path::cend() const noexcept {
     return lines.cend();
 }
 
+std::optional<path::distance_type> path::distance_to(point const& p) const {
+    distance_type acc{};
+    for (auto& l : *this) {
+        if (auto dp = l.distance_to(p); dp)
+            return {acc + *dp};
+        else
+            acc += l.length();
+    }
+    return {};
+}
+
 }

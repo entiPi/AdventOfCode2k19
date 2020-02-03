@@ -53,6 +53,26 @@ TEST_CASE("paths") {
         }
     }
 
+    SECTION("distance on path") {
+
+        move const first{"U10"}, second{"R5"}, third{"D3"}, fourth{"L7"};
+        auto const p = path{point{0,0}}
+              .then(first)
+              .then(second)
+              .then(third)
+              .then(fourth);
+
+        SECTION("part of path") {
+            REQUIRE(p.distance_to(point{0,0}).value() == 0);
+            REQUIRE(p.distance_to(point{0,10}).value() == 10);
+            REQUIRE(p.distance_to(point{5,10}).value() == 15);
+        }
+
+        SECTION("point not on path yields empty result") {
+            REQUIRE(!p.distance_to(point{1,0}).has_value());
+        }
+    }
+
     SECTION("iterators") {
         using namespace std;
         line const l{{0,0}, {3,0}};

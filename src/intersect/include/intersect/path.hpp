@@ -2,6 +2,7 @@
 #include <intersect/line.hpp>
 #include <intersect/point.hpp>
 #include <initializer_list>
+#include <optional>
 #include <vector>
 
 
@@ -10,6 +11,7 @@ namespace intersect {
 struct path {
     using iterator = std::vector<line>::iterator;
     using const_iterator = std::vector<line>::const_iterator;
+    using distance_type = unsigned;
 
     explicit path(point origin);
     explicit path(std::initializer_list<line> lines);
@@ -25,6 +27,8 @@ struct path {
     iterator end() noexcept;
     const_iterator end() const noexcept;
     const_iterator cend() const noexcept;
+
+    std::optional<distance_type> distance_to(point const& p) const;
 
     private:
     point const origin_;

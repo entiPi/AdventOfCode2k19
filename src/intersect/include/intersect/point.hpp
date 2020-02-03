@@ -20,6 +20,9 @@ struct point {
     value_type x_, y_;
 };
 
+point::value_type get_x(point const& p);
+point::value_type get_y(point const& p);
+point rotate(point const& p);
 std::string to_string(point const& p);
 std::ostream& operator<<(std::ostream&, point const&);
 bool operator==(point const& lhs, point const& rhs);

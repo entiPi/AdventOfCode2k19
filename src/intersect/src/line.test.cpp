@@ -74,16 +74,12 @@ TEST_CASE("line") {
             point a{0,0}, b{1,1};
             REQUIRE_THROWS_AS(line(a, b), multiple_dimensions);
         }
-
-        SECTION("start and stop not same point") {
-            point origin{0,0};
-            REQUIRE_THROWS_AS(line(origin, origin), invalid_distance);
-        }
     }
 
     SECTION("can query length") {
 
         SECTION("from points") {
+            REQUIRE(line{{0,0}, point{0,0}}.length() == 0);
             REQUIRE(line{{0,0}, {1,0}}.length() == 1);
             REQUIRE(line{{0,0}, {0,1}}.length() == 1);
             REQUIRE(line{{0,0}, {2,0}}.length() == 2);
@@ -120,4 +116,16 @@ TEST_CASE("line") {
             REQUIRE(line{{0,0}, move{"R2"}}.direction() == dir::RIGHT);
         }
     }
+
+    SECTION("can measure distance to point") {
+
+        line const l{{0,0}, {0,10}};
+
+        SECTION("part of line") {
+            REQUIRE(l.distance_to(point{0,0}).value() == 0);
+            REQUIRE(l.distance_to(point{0,1}).value() == 1);
+            REQUIRE(!l.distance_to(point{1,10}).has_value());
+        }
+    }
+
 }

@@ -1,4 +1,5 @@
 #include <intersect/line.hpp>
+#include <algorithm>
 #include <cassert>
 #include <sstream>
 #include <stdexcept>
@@ -8,8 +9,24 @@ using namespace std::string_literals;
 
 namespace {
 
+using namespace intersect;
+
 bool is_number(char c) {
     return c >= '0' && c <= '9';
+}
+
+bool is_between(int val, int low, int high) {
+    return low <= val && val <= high;
+}
+
+bool is_on_line(line const& l, point const& p) {
+    auto const [flipped, lh] = make_horizontal(l);
+    auto const fp = flipped ? rotate(p) : p;
+    if (get_y(lh.start()) == fp.y()) {
+        auto const [x1, x2] = get_sorted(get_x, lh);
+        return is_between(fp.x(), x1, x2);
+    }
+    return false;
 }
 
 }
@@ -42,13 +59,17 @@ int move::length() const {
     return length_;
 }
 
+std::optional<line::distance_type> line::distance_to(point const& p) const {
+    if (is_on_line(*this, p))
+        return {line{start(), p}.length()};
+    return {};
+}
+
 line::line(point const& start, point const& stop)
 : start_{start}
 , stop_{stop} {
     if (start_.x() != stop_.x() && start_.y() != stop_.y())
         throw multiple_dimensions{start_, stop_};
-    if (start_ == stop_)
-        throw invalid_distance{'0'};
 }
 
 line::line(point const& start, move const& mv)
@@ -79,6 +100,28 @@ int line::length_in_x() const {
 
 int line::length_in_y() const {
     return stop_.y() - start_.y();
+}
+
+bool is_vertical(line const& l) {
+    return l.direction() == dir::UP || l.direction() == dir::DOWN;
+}
+
+bool is_horizontal(line const& l) {
+    return l.direction() == dir::LEFT || l.direction() == dir::RIGHT;
+}
+
+line rotate(line const& l) {
+    return line{rotate(l.start()), rotate(l.stop())};
+}
+
+tuple<bool,line> make_horizontal(line const& l) {
+    if (is_vertical(l))
+        return make_tuple(true, rotate(l));
+    return make_tuple(false, l);
+}
+
+pair<point::value_type, point::value_type> get_sorted(point::value_type(x_or_y)(point const&), line const& l) {
+    return minmax(x_or_y(l.start()), x_or_y(l.stop()));
 }
 
 invalid_distance::invalid_distance(char d)

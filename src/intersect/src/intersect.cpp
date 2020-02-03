@@ -12,14 +12,6 @@ namespace intersect {
 
 namespace {
 
-bool is_vertical(line const& l) {
-    return l.direction() == dir::UP || l.direction() == dir::DOWN;
-}
-
-bool is_horizontal(line const& l) {
-    return l.direction() == dir::LEFT || l.direction() == dir::RIGHT;
-}
-
 bool is_parallel(line const& l1, line const& l2) {
     return (is_vertical(l1) && is_vertical(l2))
         || (is_horizontal(l1) && is_horizontal(l2));
@@ -27,13 +19,6 @@ bool is_parallel(line const& l1, line const& l2) {
 
 bool has_parallel_offset(point::value_type(x_or_y)(point const&), line const& l1, line const& l2) {
     return x_or_y(l1.start()) - x_or_y(l2.start()) != 0;
-}
-
-point::value_type get_x(point const& p) { return p.x(); }
-point::value_type get_y(point const& p) { return p.y(); }
-
-pair<point::value_type, point::value_type> get_sorted(point::value_type(x_or_y)(point const&), line const& l) {
-    return minmax(x_or_y(l.start()), x_or_y(l.stop()));
 }
 
 bool is_between(int val, int low, int high) {
@@ -63,20 +48,6 @@ vector<point> generate_point_sequence(point::value_type from, point::value_type 
     vec.reserve(distance);
     generate_n(back_inserter(vec), distance, generate_points(from));
     return vec;
-}
-
-point rotate(point const& p) {
-    return point{p.y(), p.x()};
-}
-
-line rotate(line const& l) {
-    return line{rotate(l.start()), rotate(l.stop())};
-}
-
-tuple<bool,line> make_horizontal(line const& l) {
-    if (is_vertical(l))
-        return make_tuple(true, rotate(l));
-    return make_tuple(false, l);
 }
 
 }

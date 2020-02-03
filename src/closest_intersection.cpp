@@ -49,8 +49,8 @@ int main() {
     vector<point> crossings = intersections(wire1, wire2);
 
     vector<int> distances;
-    auto distance_to_origin = [](point const& p){ return p.distance_to(point{0,0}); };
-    transform(begin(crossings), end(crossings), back_inserter(distances), distance_to_origin);
+    auto path_length = [&](point const& p){ return *wire1.distance_to(p) + *wire2.distance_to(p); };
+    transform(begin(crossings), end(crossings), back_inserter(distances), path_length);
     sort(begin(distances), end(distances));
     cout << distances[1] << '\n';
 }

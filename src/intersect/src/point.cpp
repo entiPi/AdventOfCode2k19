@@ -12,6 +12,13 @@ point::distance_type point::distance_to(point const& other) const {
 point::value_type point::x() const { return x_; }
 point::value_type point::y() const { return y_; }
 
+point::value_type get_x(point const& p) { return p.x(); }
+point::value_type get_y(point const& p) { return p.y(); }
+
+point rotate(point const& p) {
+    return point{p.y(), p.x()};
+}
+
 std::string to_string(point const& p) {
     std::stringstream ss;
     ss << p;
