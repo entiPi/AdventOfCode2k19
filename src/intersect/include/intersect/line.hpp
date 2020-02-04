@@ -22,8 +22,8 @@ struct move {
 };
 
 struct line {
-    line(point const& start, point const& stop);
-    line(point const& start, move const& mv);
+    explicit line(point const& start, point const& stop);
+    explicit line(point const& start, move const& mv);
 
     constexpr point const& start() const { return start_; }
     constexpr point const& stop() const { return stop_; }

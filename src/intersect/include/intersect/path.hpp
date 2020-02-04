@@ -11,8 +11,8 @@ struct path {
     using iterator = std::vector<line>::iterator;
     using const_iterator = std::vector<line>::const_iterator;
 
-    path(point origin);
-    path(std::initializer_list<line> lines);
+    explicit path(point origin);
+    explicit path(std::initializer_list<line> lines);
 
     path& then(line next);
     path& then(move next);
